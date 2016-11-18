@@ -240,7 +240,6 @@ func parseTag(row string) *types.CTag {
 
 	parts = parts[2:]
 
-	signature := ""
 	returntype := ""
 	for _, part := range parts {
 		if strings.Contains(part, ":") {
@@ -257,7 +256,7 @@ func parseTag(row string) *types.CTag {
 			case "typeref":
 				tag.Typeref = value
 			case "signature":
-				signature = value
+				tag.Signature = value
 			case "returntype":
 				returntype = value
 			case "class":
@@ -269,7 +268,7 @@ func parseTag(row string) *types.CTag {
 			}
 		}
 	}
-	tag.Prototype = returntype + " " + tag.FunctionName + signature + ";"
+	tag.Prototype = returntype + " " + tag.FunctionName + tag.Signature + ";"
 
 	if strings.Contains(row, "/^") && strings.Contains(row, "$/;") {
 		tag.Code = row[strings.Index(row, "/^")+2 : strings.Index(row, "$/;")]

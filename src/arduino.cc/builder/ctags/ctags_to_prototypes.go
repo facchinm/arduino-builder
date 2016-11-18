@@ -79,6 +79,9 @@ func functionNameUsedAsFunctionPointerIn(tag *types.CTag, functionNames []string
 		if strings.Index(tag.Code, "&"+functionName) != -1 {
 			return true
 		}
+		if strings.Index(tag.Code, functionName) != -1 {
+			return true
+		}
 	}
 	return false
 }
@@ -86,7 +89,8 @@ func functionNameUsedAsFunctionPointerIn(tag *types.CTag, functionNames []string
 func collectFunctionNames(tags []*types.CTag) []string {
 	names := []string{}
 	for _, tag := range tags {
-		if tag.Kind == KIND_FUNCTION {
+		if tag.Kind == KIND_FUNCTION && !tag.SkipMe &&
+			(tag.Signature == "()" || tag.Signature == "(void)" || tag.Signature == "") {
 			names = append(names, tag.FunctionName)
 		}
 	}
