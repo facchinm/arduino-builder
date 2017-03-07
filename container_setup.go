@@ -50,6 +50,7 @@ func (s *ContainerSetupHardwareToolsLibsSketchAndProps) Run(ctx *types.Context) 
 		&SketchLoader{},
 		&SetupBuildProperties{},
 		&LoadVIDPIDSpecificProperties{},
+		&FindAndApplySketchPreprocessorDirectives{},
 		&SetCustomBuildProperties{},
 		&AddMissingBuildPropertiesFromParentPlatformTxtFiles{},
 	}
