@@ -67,6 +67,23 @@ func (s *LibrariesBuilder) Run(ctx *types.Context) error {
 
 	ctx.LibrariesObjectFiles = objectFiles
 
+	// Search for precompiled libraries
+	// usePrecompiledLibraries(ctx, libraries)
+
+	return nil
+}
+
+func usePrecompiledLibraries(ctx *types.Context, libraries []*types.Library) error {
+
+	for _, library := range libraries {
+		if library.Precompiled {
+			// add library src path to compiler.c.elf.extra_flags
+			// use library.Name as lib name and srcPath/{mcpu} as location
+			mcu := ctx.BuildProperties["build.mcu"]
+			path := filepath.Join(library.SrcFolder, mcu)
+			ctx.BuildProperties["compiler.c.elf.extra_flags"] = "\"-L" + path + "\" -l" + library.RealName
+		}
+	}
 	return nil
 }
 
