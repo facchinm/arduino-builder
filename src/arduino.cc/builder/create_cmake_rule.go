@@ -37,11 +37,14 @@ import (
 
 	"arduino.cc/builder/builder_utils"
 	"arduino.cc/builder/constants"
+	"arduino.cc/builder/i18n"
 	"arduino.cc/builder/types"
 	"arduino.cc/builder/utils"
 )
 
 var ADDITIONAL_FILE_VALID_EXPORT_EXTENSIONS = map[string]bool{".h": true, ".c": true, ".hpp": true, ".hh": true, ".cpp": true, ".s": true, ".a": true}
+var DOTHEXTENSION = map[string]bool{".h": true, ".hh": true, ".hpp": true}
+var DOTAEXTENSION = map[string]bool{".a": true}
 
 type ExportProjectCMake struct{}
 
@@ -58,6 +61,9 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 
 	libBaseFolder := filepath.Join(cmakeFolder, "lib")
 	os.Mkdir(libBaseFolder, 0777)
+
+	buildBaseFolder := filepath.Join(cmakeFolder, "build")
+	os.Mkdir(buildBaseFolder, 0777)
 
 	coreFolder := filepath.Join(cmakeFolder, "core")
 
@@ -85,45 +91,119 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 		fmt.Println(err)
 	}
 
-	err = utils.CopyDir(filepath.Dir(ctx.Sketch.MainFile.Name), filepath.Join(cmakeFolder, "sketch"), extensions)
+	err = utils.CopyDir(ctx.SketchBuildPath, filepath.Join(cmakeFolder, "sketch"), extensions)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	utils.WriteFile(filepath.Join(cmakeFolder, "sketch", filepath.Base(ctx.Sketch.MainFile.Name)+".cpp"), ctx.Sketch.MainFile.Source)
+	//utils.WriteFile(filepath.Join(cmakeFolder, "sketch", filepath.Base(ctx.Sketch.MainFile.Name)+".cpp"), ctx.Sketch.MainFile.Source)
 
-	var defines string
-	//var libs string
+	var defines []string
+	var linkerflags []string
+	var libs []string
+	var linkDirectories []string
 
-	command, _ := builder_utils.PrepareCommandForRecipe(ctx.BuildProperties, constants.RECIPE_C_COMBINE_PATTERN, true, true, true, logger)
+	extractCompileFlags(ctx, constants.RECIPE_C_COMBINE_PATTERN, &defines, &libs, &linkerflags, &linkDirectories, logger)
+	extractCompileFlags(ctx, constants.RECIPE_C_PATTERN, &defines, &libs, &linkerflags, &linkDirectories, logger)
+	extractCompileFlags(ctx, constants.RECIPE_CPP_PATTERN, &defines, &libs, &linkerflags, &linkDirectories, logger)
 
-	for _, arg := range command.Args {
-		if strings.HasPrefix(arg, "-D") {
-			defines += defines + " " + arg
-		}
-	}
+	var headerFiles []string
+	isHeader := func(ext string) bool { return DOTHEXTENSION[ext] }
+	utils.FindFilesInFolder(&headerFiles, cmakeFolder, isHeader, true)
+	foldersContainingDotH := findUniqueFoldersRelative(headerFiles, cmakeFolder)
 
-	command, _ = builder_utils.PrepareCommandForRecipe(ctx.BuildProperties, constants.RECIPE_C_PATTERN, true, true, true, logger)
+	var staticLibsFiles []string
+	isStaticLib := func(ext string) bool { return DOTAEXTENSION[ext] }
+	utils.FindFilesInFolder(&staticLibsFiles, cmakeFolder, isStaticLib, true)
+	//foldersContainingDotA := findUniqueFoldersRelative(staticLibsFiles, cmakeFolder)
 
-	for _, arg := range command.Args {
-		if strings.HasPrefix(arg, "-D") {
-			defines += defines + " " + arg
-		}
+	fmt.Println(libs)
+	for i, _ := range libs {
+		libs[i] = strings.TrimPrefix(libs[i], "-l")
 	}
 
 	cmakelist := "cmake_minimum_required(VERSION 2.8.9)\n"
-	cmakelist += "project (" + filepath.Base(ctx.Sketch.MainFile.Name) + ")\n"
-	cmakelist += "add_definitions (" + defines + ")\n"
-	cmakelist += "include_directories (core/variant core lib sketch)\n"
-	cmakelist += "file (GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/*.c*)\n"
-	cmakelist += "file (GLOB_RECURSE SOURCES_LIBS ${PROJECT_SOURCE_DIR}/*.a)\n"
+	cmakelist += "INCLUDE(FindPkgConfig)\n"
+	cmakelist += "project (" + filepath.Base(ctx.Sketch.MainFile.Name) + " C CXX)\n"
+	cmakelist += "add_definitions (" + strings.Join(defines, " ") + " " + strings.Join(linkerflags, " ") + ")\n"
+	cmakelist += "include_directories (" + foldersContainingDotH + ")\n"
+
+	var relLinkDirectories []string
+	for _, dir := range linkDirectories {
+		relLinkDirectories = append(relLinkDirectories, strings.TrimPrefix(dir, cmakeFolder))
+	}
+	for _, lib := range libs {
+		//cmakelist += "add_library (" + lib + " SHARED IMPORTED)\n"
+		cmakelist += "pkg_search_module (" + strings.ToUpper(lib) + "REQUIRED " + lib + ")\n"
+		linkDirectories = append(linkDirectories, "${"+strings.ToUpper(lib)+"_LIBRARY_DIRS}")
+		//cmakelist += "set_property(TARGET " + lib + " PROPERTY IMPORTED_LOCATION " + location + " )\n"
+	}
+	cmakelist += "link_directories (" + strings.Join(linkDirectories, " ") + ")\n"
+	for _, staticLibsFile := range staticLibsFiles {
+		lib := filepath.Base(staticLibsFile)
+		lib = strings.TrimPrefix(lib, "lib")
+		lib = strings.TrimSuffix(lib, ".a")
+		if !utils.SliceContains(libs, lib) {
+			libs = append(libs, lib)
+			cmakelist += "add_library (" + lib + " STATIC IMPORTED)\n"
+			location := strings.TrimPrefix(staticLibsFile, cmakeFolder)
+			cmakelist += "set_property(TARGET " + lib + " PROPERTY IMPORTED_LOCATION " + "${PROJECT_SOURCE_DIR}" + location + " )\n"
+		}
+	}
+	cmakelist += "file (GLOB_RECURSE SOURCES core/*.c* lib/*.c* sketch/*.c*)\n"
 	cmakelist += "add_executable (" + filepath.Base(ctx.Sketch.MainFile.Name) + " ${SOURCES} ${SOURCES_LIBS})\n"
+	cmakelist += "target_link_libraries( " + filepath.Base(ctx.Sketch.MainFile.Name) + " " + strings.Join(libs, " ") + ")\n"
 
 	utils.WriteFile(cmakeFile, cmakelist)
 
-	for _, library := range ctx.ImportedLibraries {
-		fmt.Println(library.Folder)
-	}
-
+	/*
+		for _, library := range ctx.ImportedLibraries {
+			fmt.Println(library.Folder)
+		}
+	*/
 	return nil
+}
+
+func extractCompileFlags(ctx *types.Context, receipe string, defines, libs, linkerflags, linkDirectories *[]string, logger i18n.Logger) {
+	command, _ := builder_utils.PrepareCommandForRecipe(ctx.BuildProperties, receipe, true, true, true, logger)
+
+	for _, arg := range command.Args {
+		if strings.HasPrefix(arg, "-D") {
+			*defines = appendIfUnique(*defines, arg)
+		} else {
+			if strings.HasPrefix(arg, "-l") {
+				*libs = appendIfUnique(*libs, arg)
+			} else {
+				if strings.HasPrefix(arg, "-L") {
+					*linkDirectories = appendIfUnique(*linkDirectories, strings.TrimPrefix(arg, "-L"))
+				} else {
+					if strings.HasPrefix(arg, "-") && !strings.HasPrefix(arg, "-I") {
+						// HACK : from linkerflags remove MMD
+						if !strings.HasPrefix(arg, "-MMD") {
+							*linkerflags = appendIfUnique(*linkerflags, arg)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func findUniqueFoldersRelative(slice []string, base string) string {
+	var out []string
+	for _, element := range slice {
+		path := filepath.Dir(element)
+		path = strings.TrimPrefix(path, base+"/")
+		if !utils.SliceContains(out, path) {
+			out = append(out, path)
+		}
+	}
+	return strings.Join(out, " ")
+}
+
+func appendIfUnique(slice []string, element string) []string {
+	if !utils.SliceContains(slice, element) {
+		slice = append(slice, element)
+	}
+	return slice
 }
