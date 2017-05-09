@@ -74,6 +74,10 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 	for _, library := range ctx.ImportedLibraries {
 		libFolder := filepath.Join(libBaseFolder, library.Name)
 		utils.CopyDir(library.Folder, libFolder, extensions)
+		// Remove examples folder
+		if _, err := os.Stat(filepath.Join(library.Folder, "examples")); err == nil {
+			os.Remove(filepath.Join(library.Folder, "examples"))
+		}
 	}
 
 	// Copy core + variant in use + preprocessed sketch in the correct folders
@@ -121,18 +125,27 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 	cmakelist += "add_definitions (" + strings.Join(defines, " ") + " " + strings.Join(linkerflags, " ") + ")\n"
 	cmakelist += "include_directories (" + foldersContainingDotH + ")\n"
 
+	// Make link directories relative
+	// We can totally discard them since they mostly are outside the core folder
+	// If they are inside the core they are not getting copied :)
 	var relLinkDirectories []string
 	for _, dir := range linkDirectories {
-		relLinkDirectories = append(relLinkDirectories, strings.TrimPrefix(dir, cmakeFolder))
+		if strings.Contains(dir, cmakeFolder) {
+			relLinkDirectories = append(relLinkDirectories, strings.TrimPrefix(dir, cmakeFolder))
+		}
 	}
+
+	// Add SO_PATHS option for libraries not getting found by pkg_config
+	cmakelist += "set(EXTRA_LIBS_DIRS \"\" CACHE STRING \"Additional paths for dynamic libraries\")\n"
+
 	for i, lib := range libs {
 		// Dynamic libraries should be discovered by pkg_config
 		lib = strings.TrimPrefix(lib, "-l")
 		libs[i] = lib
-		cmakelist += "pkg_search_module (" + strings.ToUpper(lib) + "REQUIRED " + lib + ")\n"
-		linkDirectories = append(linkDirectories, "${"+strings.ToUpper(lib)+"_LIBRARY_DIRS}")
+		cmakelist += "pkg_search_module (" + strings.ToUpper(lib) + " " + lib + ")\n"
+		relLinkDirectories = append(relLinkDirectories, "${"+strings.ToUpper(lib)+"_LIBRARY_DIRS}")
 	}
-	cmakelist += "link_directories (" + strings.Join(linkDirectories, " ") + ")\n"
+	cmakelist += "link_directories (" + strings.Join(relLinkDirectories, " ") + " ${SO_PATHS})\n"
 	for _, staticLibsFile := range staticLibsFiles {
 		// Static libraries are fully configured
 		lib := filepath.Base(staticLibsFile)
@@ -145,7 +158,11 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 			cmakelist += "set_property(TARGET " + lib + " PROPERTY IMPORTED_LOCATION " + "${PROJECT_SOURCE_DIR}" + location + " )\n"
 		}
 	}
+	// Include source files
+	// TODO: remove .cpp and .h from libraries example folders
 	cmakelist += "file (GLOB_RECURSE SOURCES core/*.c* lib/*.c* sketch/*.c*)\n"
+
+	// Compile and link project
 	cmakelist += "add_executable (" + projectName + " ${SOURCES} ${SOURCES_LIBS})\n"
 	cmakelist += "target_link_libraries( " + projectName + " " + strings.Join(libs, " ") + ")\n"
 
@@ -160,20 +177,20 @@ func extractCompileFlags(ctx *types.Context, receipe string, defines, libs, link
 	for _, arg := range command.Args {
 		if strings.HasPrefix(arg, "-D") {
 			*defines = appendIfUnique(*defines, arg)
-		} else {
-			if strings.HasPrefix(arg, "-l") {
-				*libs = appendIfUnique(*libs, arg)
-			} else {
-				if strings.HasPrefix(arg, "-L") {
-					*linkDirectories = appendIfUnique(*linkDirectories, strings.TrimPrefix(arg, "-L"))
-				} else {
-					if strings.HasPrefix(arg, "-") && !strings.HasPrefix(arg, "-I") {
-						// HACK : from linkerflags remove MMD
-						if !strings.HasPrefix(arg, "-MMD") {
-							*linkerflags = appendIfUnique(*linkerflags, arg)
-						}
-					}
-				}
+			continue
+		}
+		if strings.HasPrefix(arg, "-l") {
+			*libs = appendIfUnique(*libs, arg)
+			continue
+		}
+		if strings.HasPrefix(arg, "-L") {
+			*linkDirectories = appendIfUnique(*linkDirectories, strings.TrimPrefix(arg, "-L"))
+			continue
+		}
+		if strings.HasPrefix(arg, "-") && !strings.HasPrefix(arg, "-I") {
+			// HACK : from linkerflags remove MMD (no cache is produced)
+			if !strings.HasPrefix(arg, "-MMD") {
+				*linkerflags = appendIfUnique(*linkerflags, arg)
 			}
 		}
 	}
