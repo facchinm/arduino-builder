@@ -42,7 +42,7 @@ import (
 	"arduino.cc/builder/utils"
 )
 
-var ADDITIONAL_FILE_VALID_EXPORT_EXTENSIONS = map[string]bool{".h": true, ".c": true, ".hpp": true, ".hh": true, ".cpp": true, ".s": true, ".a": true}
+var VALID_EXPORT_EXTENSIONS = map[string]bool{".h": true, ".c": true, ".hpp": true, ".hh": true, ".cpp": true, ".s": true, ".a": true}
 var DOTHEXTENSION = map[string]bool{".h": true, ".hh": true, ".hpp": true}
 var DOTAEXTENSION = map[string]bool{".a": true}
 
@@ -52,52 +52,45 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 	//verbose := ctx.Verbose
 	logger := ctx.GetLogger()
 
-	// Create new cmake subFolder
+	// Create new cmake subFolder - clean if the folder is already there
 	cmakeFolder := filepath.Join(ctx.BuildPath, "_cmake")
 	if _, err := os.Stat(cmakeFolder); err == nil {
 		os.RemoveAll(cmakeFolder)
 	}
 	os.Mkdir(cmakeFolder, 0777)
 
+	// Create lib and build subfolders
 	libBaseFolder := filepath.Join(cmakeFolder, "lib")
 	os.Mkdir(libBaseFolder, 0777)
-
 	buildBaseFolder := filepath.Join(cmakeFolder, "build")
 	os.Mkdir(buildBaseFolder, 0777)
 
+	// Create core subfolder path (don't create it yet)
 	coreFolder := filepath.Join(cmakeFolder, "core")
-
 	cmakeFile := filepath.Join(cmakeFolder, "CMakeLists.txt")
-	//coreFolder := buildProperties[constants.BUILD_PROPERTIES_BUILD_CORE_PATH]
-	//variantFolder := buildProperties[constants.BUILD_PROPERTIES_BUILD_VARIANT_PATH]
 
-	// Copy used core + used libraries + preprocessed sketch in their folder
-
-	// Extract CFLAGS, CPPFLAGS and LDFLAGS
-	extensions := func(ext string) bool { return ADDITIONAL_FILE_VALID_EXPORT_EXTENSIONS[ext] }
-
+	// Copy used  libraries in the correct folder
+	extensions := func(ext string) bool { return VALID_EXPORT_EXTENSIONS[ext] }
 	for _, library := range ctx.ImportedLibraries {
 		libFolder := filepath.Join(libBaseFolder, library.Name)
 		utils.CopyDir(library.Folder, libFolder, extensions)
 	}
 
+	// Copy core + variant in use + preprocessed sketch in the correct folders
 	err := utils.CopyDir(ctx.BuildProperties[constants.BUILD_PROPERTIES_BUILD_CORE_PATH], coreFolder, extensions)
 	if err != nil {
 		fmt.Println(err)
 	}
-
 	err = utils.CopyDir(ctx.BuildProperties[constants.BUILD_PROPERTIES_BUILD_VARIANT_PATH], filepath.Join(coreFolder, "variant"), extensions)
 	if err != nil {
 		fmt.Println(err)
 	}
-
 	err = utils.CopyDir(ctx.SketchBuildPath, filepath.Join(cmakeFolder, "sketch"), extensions)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	//utils.WriteFile(filepath.Join(cmakeFolder, "sketch", filepath.Base(ctx.Sketch.MainFile.Name)+".cpp"), ctx.Sketch.MainFile.Source)
-
+	// Extract CFLAGS, CPPFLAGS and LDFLAGS
 	var defines []string
 	var linkerflags []string
 	var libs []string
@@ -107,24 +100,24 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 	extractCompileFlags(ctx, constants.RECIPE_C_PATTERN, &defines, &libs, &linkerflags, &linkDirectories, logger)
 	extractCompileFlags(ctx, constants.RECIPE_CPP_PATTERN, &defines, &libs, &linkerflags, &linkDirectories, logger)
 
+	// Extract folders with .h in them for adding in include list
 	var headerFiles []string
 	isHeader := func(ext string) bool { return DOTHEXTENSION[ext] }
 	utils.FindFilesInFolder(&headerFiles, cmakeFolder, isHeader, true)
 	foldersContainingDotH := findUniqueFoldersRelative(headerFiles, cmakeFolder)
 
+	// Extract folders with .a in them for adding in static libs paths list
 	var staticLibsFiles []string
 	isStaticLib := func(ext string) bool { return DOTAEXTENSION[ext] }
 	utils.FindFilesInFolder(&staticLibsFiles, cmakeFolder, isStaticLib, true)
-	//foldersContainingDotA := findUniqueFoldersRelative(staticLibsFiles, cmakeFolder)
 
-	fmt.Println(libs)
-	for i, _ := range libs {
-		libs[i] = strings.TrimPrefix(libs[i], "-l")
-	}
+	// Generate the CMakeLists global file
+
+	projectName := strings.TrimSuffix(filepath.Base(ctx.Sketch.MainFile.Name), filepath.Ext(ctx.Sketch.MainFile.Name))
 
 	cmakelist := "cmake_minimum_required(VERSION 2.8.9)\n"
 	cmakelist += "INCLUDE(FindPkgConfig)\n"
-	cmakelist += "project (" + filepath.Base(ctx.Sketch.MainFile.Name) + " C CXX)\n"
+	cmakelist += "project (" + projectName + " C CXX)\n"
 	cmakelist += "add_definitions (" + strings.Join(defines, " ") + " " + strings.Join(linkerflags, " ") + ")\n"
 	cmakelist += "include_directories (" + foldersContainingDotH + ")\n"
 
@@ -132,14 +125,16 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 	for _, dir := range linkDirectories {
 		relLinkDirectories = append(relLinkDirectories, strings.TrimPrefix(dir, cmakeFolder))
 	}
-	for _, lib := range libs {
-		//cmakelist += "add_library (" + lib + " SHARED IMPORTED)\n"
+	for i, lib := range libs {
+		// Dynamic libraries should be discovered by pkg_config
+		lib = strings.TrimPrefix(lib, "-l")
+		libs[i] = lib
 		cmakelist += "pkg_search_module (" + strings.ToUpper(lib) + "REQUIRED " + lib + ")\n"
 		linkDirectories = append(linkDirectories, "${"+strings.ToUpper(lib)+"_LIBRARY_DIRS}")
-		//cmakelist += "set_property(TARGET " + lib + " PROPERTY IMPORTED_LOCATION " + location + " )\n"
 	}
 	cmakelist += "link_directories (" + strings.Join(linkDirectories, " ") + ")\n"
 	for _, staticLibsFile := range staticLibsFiles {
+		// Static libraries are fully configured
 		lib := filepath.Base(staticLibsFile)
 		lib = strings.TrimPrefix(lib, "lib")
 		lib = strings.TrimSuffix(lib, ".a")
@@ -151,16 +146,11 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 		}
 	}
 	cmakelist += "file (GLOB_RECURSE SOURCES core/*.c* lib/*.c* sketch/*.c*)\n"
-	cmakelist += "add_executable (" + filepath.Base(ctx.Sketch.MainFile.Name) + " ${SOURCES} ${SOURCES_LIBS})\n"
-	cmakelist += "target_link_libraries( " + filepath.Base(ctx.Sketch.MainFile.Name) + " " + strings.Join(libs, " ") + ")\n"
+	cmakelist += "add_executable (" + projectName + " ${SOURCES} ${SOURCES_LIBS})\n"
+	cmakelist += "target_link_libraries( " + projectName + " " + strings.Join(libs, " ") + ")\n"
 
 	utils.WriteFile(cmakeFile, cmakelist)
 
-	/*
-		for _, library := range ctx.ImportedLibraries {
-			fmt.Println(library.Folder)
-		}
-	*/
 	return nil
 }
 
