@@ -46,11 +46,18 @@ var VALID_EXPORT_EXTENSIONS = map[string]bool{".h": true, ".c": true, ".hpp": tr
 var DOTHEXTENSION = map[string]bool{".h": true, ".hh": true, ".hpp": true}
 var DOTAEXTENSION = map[string]bool{".a": true}
 
-type ExportProjectCMake struct{}
+type ExportProjectCMake struct {
+	// Was there an error while compiling the sketch?
+	SketchError bool
+}
 
 func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 	//verbose := ctx.Verbose
 	logger := ctx.GetLogger()
+
+	if s.SketchError {
+		return nil
+	}
 
 	// Create new cmake subFolder - clean if the folder is already there
 	cmakeFolder := filepath.Join(ctx.BuildPath, "_cmake")
@@ -145,7 +152,7 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 		cmakelist += "pkg_search_module (" + strings.ToUpper(lib) + " " + lib + ")\n"
 		relLinkDirectories = append(relLinkDirectories, "${"+strings.ToUpper(lib)+"_LIBRARY_DIRS}")
 	}
-	cmakelist += "link_directories (" + strings.Join(relLinkDirectories, " ") + " ${SO_PATHS})\n"
+	cmakelist += "link_directories (" + strings.Join(relLinkDirectories, " ") + " ${EXTRA_LIBS_DIRS})\n"
 	for _, staticLibsFile := range staticLibsFiles {
 		// Static libraries are fully configured
 		lib := filepath.Base(staticLibsFile)

@@ -128,7 +128,7 @@ func (s *Builder) Run(ctx *types.Context) error {
 
 		&PrintUsedLibrariesIfVerbose{},
 
-		&ExportProjectCMake{},
+		&ExportProjectCMake{SketchError: mainErr != nil},
 
 		&phases.Sizer{SketchError: mainErr != nil},
 	}
