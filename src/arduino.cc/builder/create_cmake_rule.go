@@ -82,8 +82,8 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 		libFolder := filepath.Join(libBaseFolder, library.Name)
 		utils.CopyDir(library.Folder, libFolder, extensions)
 		// Remove examples folder
-		if _, err := os.Stat(filepath.Join(library.Folder, "examples")); err == nil {
-			os.Remove(filepath.Join(library.Folder, "examples"))
+		if _, err := os.Stat(filepath.Join(libFolder, "examples")); err == nil {
+			os.RemoveAll(filepath.Join(libFolder, "examples"))
 		}
 	}
 
@@ -126,7 +126,7 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 
 	projectName := strings.TrimSuffix(filepath.Base(ctx.Sketch.MainFile.Name), filepath.Ext(ctx.Sketch.MainFile.Name))
 
-	cmakelist := "cmake_minimum_required(VERSION 2.8.9)\n"
+	cmakelist := "cmake_minimum_required(VERSION 3.5.0)\n"
 	cmakelist += "INCLUDE(FindPkgConfig)\n"
 	cmakelist += "project (" + projectName + " C CXX)\n"
 	cmakelist += "add_definitions (" + strings.Join(defines, " ") + " " + strings.Join(linkerflags, " ") + ")\n"
@@ -179,7 +179,7 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 }
 
 func extractCompileFlags(ctx *types.Context, receipe string, defines, libs, linkerflags, linkDirectories *[]string, logger i18n.Logger) {
-	command, _ := builder_utils.PrepareCommandForRecipe(ctx.BuildProperties, receipe, true, true, true, logger)
+	command, _ := builder_utils.PrepareCommandForRecipe(ctx.BuildProperties, receipe, true, false, false, logger)
 
 	for _, arg := range command.Args {
 		if strings.HasPrefix(arg, "-D") {
