@@ -38,6 +38,7 @@ import (
 	"arduino.cc/builder/constants"
 	"arduino.cc/builder/i18n"
 	"arduino.cc/builder/types"
+	"arduino.cc/builder/utils"
 	"arduino.cc/properties"
 )
 
@@ -126,7 +127,7 @@ func checkSize(ctx *types.Context, buildProperties properties.Map) error {
 }
 
 func execSizeRecipe(ctx *types.Context, properties properties.Map) (textSize int, dataSize int, eepromSize int, resErr error) {
-	out, err := builder_utils.ExecRecipe(properties, constants.RECIPE_SIZE_PATTERN, false, ctx.Verbose, false, ctx.GetLogger())
+	out, _, err := builder_utils.ExecRecipe(ctx, properties, constants.RECIPE_SIZE_PATTERN, false, /* stdout */ utils.Capture, /* stderr */ utils.Show)
 	if err != nil {
 		resErr = errors.New("Error while determining sketch size: " + err.Error())
 		return
