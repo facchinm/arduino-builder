@@ -30,6 +30,7 @@
 package phases
 
 import (
+	"os"
 	"path/filepath"
 
 	"arduino.cc/builder/builder_utils"
@@ -46,9 +47,6 @@ func (s *CoreBuilder) Run(ctx *types.Context) error {
 	coreBuildPath := ctx.CoreBuildPath
 	coreBuildCachePath := ctx.CoreBuildCachePath
 	buildProperties := ctx.BuildProperties
-	verbose := ctx.Verbose
-	warningsLevel := ctx.WarningsLevel
-	logger := ctx.GetLogger()
 
 	err := utils.EnsureFolderExists(coreBuildPath)
 	if err != nil {
@@ -62,7 +60,7 @@ func (s *CoreBuilder) Run(ctx *types.Context) error {
 		}
 	}
 
-	archiveFile, objectFiles, err := compileCore(coreBuildPath, coreBuildCachePath, buildProperties, verbose, warningsLevel, logger)
+	archiveFile, objectFiles, err := compileCore(ctx, coreBuildPath, coreBuildCachePath, buildProperties)
 	if err != nil {
 		return i18n.WrapError(err)
 	}
@@ -73,7 +71,8 @@ func (s *CoreBuilder) Run(ctx *types.Context) error {
 	return nil
 }
 
-func compileCore(buildPath string, buildCachePath string, buildProperties properties.Map, verbose bool, warningsLevel string, logger i18n.Logger) (string, []string, error) {
+func compileCore(ctx *types.Context, buildPath string, buildCachePath string, buildProperties properties.Map) (string, []string, error) {
+	logger := ctx.GetLogger()
 	coreFolder := buildProperties[constants.BUILD_PROPERTIES_BUILD_CORE_PATH]
 	variantFolder := buildProperties[constants.BUILD_PROPERTIES_BUILD_VARIANT_PATH]
 
@@ -90,7 +89,7 @@ func compileCore(buildPath string, buildCachePath string, buildProperties proper
 
 	variantObjectFiles := []string{}
 	if variantFolder != constants.EMPTY_STRING {
-		variantObjectFiles, err = builder_utils.CompileFiles(variantObjectFiles, variantFolder, true, buildPath, buildProperties, includes, verbose, warningsLevel, logger)
+		variantObjectFiles, err = builder_utils.CompileFiles(ctx, variantObjectFiles, variantFolder, true, buildPath, buildProperties, includes)
 		if err != nil {
 			return "", nil, i18n.WrapError(err)
 		}
@@ -107,27 +106,27 @@ func compileCore(buildPath string, buildCachePath string, buildProperties proper
 
 		if canUseArchivedCore {
 			// use archived core
-			if verbose {
+			if ctx.Verbose {
 				logger.Println(constants.LOG_LEVEL_INFO, "Using precompiled core: {0}", targetArchivedCore)
 			}
 			return targetArchivedCore, variantObjectFiles, nil
 		}
 	}
 
-	coreObjectFiles, err := builder_utils.CompileFiles([]string{}, coreFolder, true, buildPath, buildProperties, includes, verbose, warningsLevel, logger)
+	coreObjectFiles, err := builder_utils.CompileFiles(ctx, []string{}, coreFolder, true, buildPath, buildProperties, includes)
 	if err != nil {
 		return "", nil, i18n.WrapError(err)
 	}
 
-	archiveFile, err := builder_utils.ArchiveCompiledFiles(buildPath, "core.a", coreObjectFiles, buildProperties, verbose, logger)
+	archiveFile, err := builder_utils.ArchiveCompiledFiles(ctx, buildPath, "core.a", coreObjectFiles, buildProperties)
 	if err != nil {
 		return "", nil, i18n.WrapError(err)
 	}
 
 	// archive core.a
 	if targetArchivedCore != "" {
-		if verbose {
-			logger.Println(constants.LOG_LEVEL_INFO, constants.MSG_ARCHIVING_CORE_CACHE, targetArchivedCore)
+		if ctx.Verbose {
+			logger.Fprintln(os.Stdout, constants.LOG_LEVEL_DEBUG, constants.MSG_ARCHIVING_CORE_CACHE, targetArchivedCore)
 		}
 		builder_utils.CopyFile(archiveFile, targetArchivedCore)
 	}
