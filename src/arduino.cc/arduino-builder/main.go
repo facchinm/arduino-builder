@@ -46,8 +46,8 @@ import (
 
 	"arduino.cc/builder"
 	"arduino.cc/builder/gohasissues"
+	"arduino.cc/builder/grpc"
 	"arduino.cc/builder/i18n"
-	"arduino.cc/builder/jsonrpc"
 	"arduino.cc/builder/types"
 	"arduino.cc/builder/utils"
 	"arduino.cc/properties"
