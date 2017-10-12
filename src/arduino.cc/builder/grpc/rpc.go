@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"arduino.cc/builder"
+	"arduino.cc/builder/i18n"
 	"arduino.cc/builder/types"
 	"arduino.cc/builder/utils"
 	"github.com/fsnotify/fsnotify"
@@ -87,6 +88,7 @@ func (s *builderServer) Autocomplete(ctx context.Context, args *pb.BuildParams) 
 	s.ctx.WarningsLevel = args.WarningsLevel
 	s.ctx.PrototypesSection = ""
 	s.ctx.CodeCompleteAt = args.CodeCompleteAt
+	s.ctx.CodeCompletions = ""
 
 	s.ctx.IncludeFolders = s.ctx.IncludeFolders[0:0]
 	s.ctx.LibrariesObjectFiles = s.ctx.LibrariesObjectFiles[0:0]
@@ -96,14 +98,16 @@ func (s *builderServer) Autocomplete(ctx context.Context, args *pb.BuildParams) 
 	s.ctx.ImportedLibraries = s.ctx.ImportedLibraries[0:0]
 
 	s.watch()
+	oldlogger := s.ctx.GetLogger()
+	logger := i18n.NoopLogger{}
+	s.ctx.SetLogger(logger)
 
 	err := builder.RunPreprocess(s.ctx)
-	if err != nil {
-		return &pb.Response{Line: s.ctx.GetLogger().Flush()}, err
-	}
 
-	// No feature was found, return an unnamed feature
-	return &pb.Response{Line: s.ctx.GetLogger().Flush()}, nil
+	response := pb.Response{Line: s.ctx.CodeCompletions}
+	s.ctx.SetLogger(oldlogger)
+
+	return &response, err
 }
 
 // GetFeature returns the feature at the given point.
