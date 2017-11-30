@@ -32,6 +32,7 @@ package test
 import (
 	"arduino.cc/builder/builder_utils"
 	"arduino.cc/builder/utils"
+	"arduino.cc/builder/types"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
@@ -52,27 +53,33 @@ func tempFile(t *testing.T, prefix string) string {
 }
 
 func TestObjFileIsUpToDateObjMissing(t *testing.T) {
+	ctx := &types.Context{}
+
 	sourceFile := tempFile(t, "source")
 	defer os.RemoveAll(sourceFile)
 
-	upToDate, err := builder_utils.ObjFileIsUpToDate(sourceFile, "", "")
+	upToDate, err := builder_utils.ObjFileIsUpToDate(ctx, sourceFile, "", "")
 	NoError(t, err)
 	require.False(t, upToDate)
 }
 
 func TestObjFileIsUpToDateDepMissing(t *testing.T) {
+	ctx := &types.Context{}
+
 	sourceFile := tempFile(t, "source")
 	defer os.RemoveAll(sourceFile)
 
 	objFile := tempFile(t, "obj")
 	defer os.RemoveAll(objFile)
 
-	upToDate, err := builder_utils.ObjFileIsUpToDate(sourceFile, objFile, "")
+	upToDate, err := builder_utils.ObjFileIsUpToDate(ctx, sourceFile, objFile, "")
 	NoError(t, err)
 	require.False(t, upToDate)
 }
 
 func TestObjFileIsUpToDateObjOlder(t *testing.T) {
+	ctx := &types.Context{}
+
 	objFile := tempFile(t, "obj")
 	defer os.RemoveAll(objFile)
 	depFile := tempFile(t, "dep")
@@ -83,12 +90,14 @@ func TestObjFileIsUpToDateObjOlder(t *testing.T) {
 	sourceFile := tempFile(t, "source")
 	defer os.RemoveAll(sourceFile)
 
-	upToDate, err := builder_utils.ObjFileIsUpToDate(sourceFile, objFile, depFile)
+	upToDate, err := builder_utils.ObjFileIsUpToDate(ctx, sourceFile, objFile, depFile)
 	NoError(t, err)
 	require.False(t, upToDate)
 }
 
 func TestObjFileIsUpToDateObjNewer(t *testing.T) {
+	ctx := &types.Context{}
+
 	sourceFile := tempFile(t, "source")
 	defer os.RemoveAll(sourceFile)
 
@@ -99,12 +108,14 @@ func TestObjFileIsUpToDateObjNewer(t *testing.T) {
 	depFile := tempFile(t, "dep")
 	defer os.RemoveAll(depFile)
 
-	upToDate, err := builder_utils.ObjFileIsUpToDate(sourceFile, objFile, depFile)
+	upToDate, err := builder_utils.ObjFileIsUpToDate(ctx, sourceFile, objFile, depFile)
 	NoError(t, err)
 	require.True(t, upToDate)
 }
 
 func TestObjFileIsUpToDateDepIsNewer(t *testing.T) {
+	ctx := &types.Context{}
+
 	sourceFile := tempFile(t, "source")
 	defer os.RemoveAll(sourceFile)
 
@@ -122,12 +133,14 @@ func TestObjFileIsUpToDateDepIsNewer(t *testing.T) {
 
 	utils.WriteFile(depFile, objFile+": \\\n\t"+sourceFile+" \\\n\t"+headerFile)
 
-	upToDate, err := builder_utils.ObjFileIsUpToDate(sourceFile, objFile, depFile)
+	upToDate, err := builder_utils.ObjFileIsUpToDate(ctx, sourceFile, objFile, depFile)
 	NoError(t, err)
 	require.False(t, upToDate)
 }
 
 func TestObjFileIsUpToDateDepIsOlder(t *testing.T) {
+	ctx := &types.Context{}
+
 	sourceFile := tempFile(t, "source")
 	defer os.RemoveAll(sourceFile)
 
@@ -143,12 +156,14 @@ func TestObjFileIsUpToDateDepIsOlder(t *testing.T) {
 
 	utils.WriteFile(depFile, objFile+": \\\n\t"+sourceFile+" \\\n\t"+headerFile)
 
-	upToDate, err := builder_utils.ObjFileIsUpToDate(sourceFile, objFile, depFile)
+	upToDate, err := builder_utils.ObjFileIsUpToDate(ctx, sourceFile, objFile, depFile)
 	NoError(t, err)
 	require.True(t, upToDate)
 }
 
 func TestObjFileIsUpToDateDepIsWrong(t *testing.T) {
+	ctx := &types.Context{}
+
 	sourceFile := tempFile(t, "source")
 	defer os.RemoveAll(sourceFile)
 
@@ -166,7 +181,7 @@ func TestObjFileIsUpToDateDepIsWrong(t *testing.T) {
 
 	utils.WriteFile(depFile, sourceFile+": \\\n\t"+sourceFile+" \\\n\t"+headerFile)
 
-	upToDate, err := builder_utils.ObjFileIsUpToDate(sourceFile, objFile, depFile)
+	upToDate, err := builder_utils.ObjFileIsUpToDate(ctx, sourceFile, objFile, depFile)
 	NoError(t, err)
 	require.False(t, upToDate)
 }
