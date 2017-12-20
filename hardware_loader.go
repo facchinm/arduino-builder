@@ -64,7 +64,7 @@ func (s *HardwareLoader) Run(ctx *types.Context) error {
 			return i18n.ErrorfWithLogger(logger, constants.MSG_MUST_BE_A_FOLDER, folder)
 		}
 
-		hardwarePlatformTxt, err := properties.SafeLoad(filepath.Join(folder, constants.FILE_PLATFORM_TXT), logger)
+		hardwarePlatformTxt, err := properties.SafeLoad(filepath.Join(folder, constants.FILE_PLATFORM_TXT))
 		if err != nil {
 			return i18n.WrapError(err)
 		}
@@ -112,7 +112,7 @@ func getOrCreatePackage(packages *types.Packages, packageId string) *types.Packa
 }
 
 func loadPackage(targetPackage *types.Package, folder string, logger i18n.Logger) error {
-	packagePlatformTxt, err := properties.SafeLoad(filepath.Join(folder, constants.FILE_PLATFORM_TXT), logger)
+	packagePlatformTxt, err := properties.SafeLoad(filepath.Join(folder, constants.FILE_PLATFORM_TXT))
 	if err != nil {
 		return i18n.WrapError(err)
 	}
@@ -186,12 +186,12 @@ func loadPlatform(targetPlatform *types.Platform, packageId string, folder strin
 
 	assignDefaultBoardToPlatform(targetPlatform)
 
-	platformTxt, err := properties.SafeLoad(filepath.Join(folder, constants.FILE_PLATFORM_TXT), logger)
+	platformTxt, err := properties.SafeLoad(filepath.Join(folder, constants.FILE_PLATFORM_TXT))
 	if err != nil {
 		return i18n.WrapError(err)
 	}
 
-	localPlatformProperties, err := properties.SafeLoad(filepath.Join(folder, constants.FILE_PLATFORM_LOCAL_TXT), logger)
+	localPlatformProperties, err := properties.SafeLoad(filepath.Join(folder, constants.FILE_PLATFORM_LOCAL_TXT))
 	if err != nil {
 		return i18n.WrapError(err)
 	}
@@ -200,7 +200,7 @@ func loadPlatform(targetPlatform *types.Platform, packageId string, folder strin
 	targetPlatform.Properties.Merge(platformTxt)
 	targetPlatform.Properties.Merge(localPlatformProperties)
 
-	programmersProperties, err := properties.SafeLoad(filepath.Join(folder, constants.FILE_PROGRAMMERS_TXT), logger)
+	programmersProperties, err := properties.SafeLoad(filepath.Join(folder, constants.FILE_PROGRAMMERS_TXT))
 	if err != nil {
 		return i18n.WrapError(err)
 	}
@@ -220,12 +220,12 @@ func assignDefaultBoardToPlatform(targetPlatform *types.Platform) {
 }
 
 func loadBoards(boards map[string]*types.Board, packageId string, platformId string, folder string, logger i18n.Logger) error {
-	boardsProperties, err := properties.Load(filepath.Join(folder, constants.FILE_BOARDS_TXT), logger)
+	boardsProperties, err := properties.Load(filepath.Join(folder, constants.FILE_BOARDS_TXT))
 	if err != nil {
 		return i18n.WrapError(err)
 	}
 
-	localProperties, err := properties.SafeLoad(filepath.Join(folder, constants.FILE_BOARDS_LOCAL_TXT), logger)
+	localProperties, err := properties.SafeLoad(filepath.Join(folder, constants.FILE_BOARDS_LOCAL_TXT))
 	if err != nil {
 		return i18n.WrapError(err)
 	}

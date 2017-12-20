@@ -46,7 +46,6 @@ import (
 type PlatformKeysRewriteLoader struct{}
 
 func (s *PlatformKeysRewriteLoader) Run(ctx *types.Context) error {
-	logger := ctx.GetLogger()
 	folders := ctx.HardwareFolders
 
 	platformKeysRewriteTxtPath, err := findPlatformKeysRewriteTxt(folders)
@@ -60,7 +59,7 @@ func (s *PlatformKeysRewriteLoader) Run(ctx *types.Context) error {
 	platformKeysRewrite := types.PlatforKeysRewrite{}
 	platformKeysRewrite.Rewrites = []types.PlatforKeyRewrite{}
 
-	txt, err := properties.Load(platformKeysRewriteTxtPath, logger)
+	txt, err := properties.Load(platformKeysRewriteTxtPath)
 	keys := utils.KeysOfMapOfString(txt)
 	sort.Strings(keys)
 

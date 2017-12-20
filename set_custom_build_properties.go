@@ -38,9 +38,8 @@ import (
 type SetCustomBuildProperties struct{}
 
 func (s *SetCustomBuildProperties) Run(ctx *types.Context) error {
-	logger := ctx.GetLogger()
 	buildProperties := ctx.BuildProperties
-	customBuildProperties, err := properties.LoadFromSlice(ctx.CustomBuildProperties, logger)
+	customBuildProperties, err := properties.LoadFromSlice(ctx.CustomBuildProperties)
 	if err != nil {
 		return i18n.WrapError(err)
 	}

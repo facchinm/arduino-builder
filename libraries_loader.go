@@ -122,7 +122,7 @@ func addUtilityFolder(library *types.Library) {
 }
 
 func makeNewLibrary(libraryFolder string, debugLevel int, logger i18n.Logger) (*types.Library, error) {
-	libProperties, err := properties.Load(filepath.Join(libraryFolder, constants.LIBRARY_PROPERTIES), logger)
+	libProperties, err := properties.Load(filepath.Join(libraryFolder, constants.LIBRARY_PROPERTIES))
 	if err != nil {
 		return nil, i18n.WrapError(err)
 	}

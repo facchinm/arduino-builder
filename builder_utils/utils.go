@@ -444,7 +444,7 @@ func PrepareCommandForRecipe(ctx *types.Context, buildProperties properties.Map,
 	var err error
 	commandLine := buildProperties.ExpandPropsInString(pattern)
 	if removeUnsetProperties {
-		commandLine, err = properties.DeleteUnexpandedPropsFromString(commandLine)
+		commandLine = properties.DeleteUnexpandedPropsFromString(commandLine)
 		if err != nil {
 			return nil, i18n.WrapError(err)
 		}
