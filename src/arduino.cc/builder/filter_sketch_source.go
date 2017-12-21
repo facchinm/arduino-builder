@@ -39,14 +39,15 @@ import (
 )
 
 type FilterSketchSource struct {
-	Source            *string
-	RemoveLineMarkers bool
+	Source               *string
+	RemoveLineMarkers    bool
+	RemoveEndLineMarkers bool
 }
 
 func (s *FilterSketchSource) Run(ctx *types.Context) error {
-	fileNames := []string{ctx.Sketch.MainFile.Name}
+	fileNames := []string{utils.QuoteCppString(ctx.Sketch.MainFile.Name)}
 	for _, file := range ctx.Sketch.OtherSketchFiles {
-		fileNames = append(fileNames, file.Name)
+		fileNames = append(fileNames, utils.QuoteCppString(file.Name))
 	}
 
 	inSketch := false
@@ -55,12 +56,20 @@ func (s *FilterSketchSource) Run(ctx *types.Context) error {
 	scanner := bufio.NewScanner(strings.NewReader(*s.Source))
 	for scanner.Scan() {
 		line := scanner.Text()
-		filename := parseLineMarker(line)
+		filename, isEndLineMarker := parseLineMarker(line)
 		if filename != "" {
-			inSketch = utils.SliceContains(fileNames, filename)
+			inSketch = utils.SliceContains(fileNames, utils.QuoteCppString(filename))
 			if inSketch && s.RemoveLineMarkers {
 				continue
 			}
+			if inSketch && s.RemoveEndLineMarkers && isEndLineMarker {
+				split := strings.SplitN(line, " ", -1)
+				filename = strings.Join(split[2:len(split)-1], " ")
+			}
+			// quote filename before adding the line
+			split := strings.SplitN(line, " ", 3)
+			split[2] = utils.QuoteCppString(filename)
+			line = strings.Join(split[:2], " ")
 		}
 
 		if inSketch {
@@ -73,8 +82,8 @@ func (s *FilterSketchSource) Run(ctx *types.Context) error {
 }
 
 // Parses the given line as a gcc line marker and returns the contained
-// filename.
-func parseLineMarker(line string) string {
+// filename
+func parseLineMarker(line string) (string, bool) {
 	// A line marker contains the line number and filename and looks like:
 	// # 123 /path/to/file.cpp
 	// It can be followed by zero or more flag number that indicate the
@@ -82,14 +91,23 @@ func parseLineMarker(line string) string {
 	// For exact details on this format, see:
 	// https://github.com/gcc-mirror/gcc/blob/edd716b6b1caa1a5cb320a8cd7f626f30198e098/gcc/c-family/c-ppoutput.c#L413-L415
 
+	line_end := false
+
 	split := strings.SplitN(line, " ", 3)
 	if len(split) < 3 || len(split[0]) == 0 || split[0][0] != '#' {
-		return ""
+		return "", line_end
 	}
 
 	_, err := strconv.Atoi(split[1])
 	if err != nil {
-		return ""
+		return "", line_end
+	}
+
+	// check if we have a line end (clang)
+	remainder := strings.SplitN(split[2], " ", -1)
+	_, err = strconv.Atoi(remainder[len(remainder)-1])
+	if err == nil {
+		line_end = true
 	}
 
 	// If we get here, we found a # followed by a line number, so
@@ -98,7 +116,7 @@ func parseLineMarker(line string) string {
 	str, rest, ok := utils.ParseCppString(split[2])
 
 	if ok && (rest == "" || rest[0] == ' ') {
-		return str
+		return str, line_end
 	}
-	return ""
+	return "", line_end
 }

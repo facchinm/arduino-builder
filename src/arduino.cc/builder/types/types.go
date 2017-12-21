@@ -222,6 +222,11 @@ type KeyValuePair struct {
 	Value string
 }
 
+type Include struct {
+	Content    string
+	LineMarker string
+}
+
 type Prototype struct {
 	FunctionName string
 	File         string

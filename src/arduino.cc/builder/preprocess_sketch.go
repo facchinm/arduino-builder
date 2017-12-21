@@ -48,6 +48,7 @@ type PreprocessSketch struct{}
 func (s *PreprocessSketch) Run(ctx *types.Context) error {
 	sourceFile := filepath.Join(ctx.SketchBuildPath, filepath.Base(ctx.Sketch.MainFile.Name)+".cpp")
 	commands := []types.Command{
+		&SaveIncludes{},
 		&GCCPreprocRunner{SourceFilePath: sourceFile, TargetFileName: constants.FILE_CTAGS_TARGET_FOR_GCC_MINUS_E, Includes: ctx.IncludeFolders},
 		&ArduinoPreprocessorRunner{},
 	}
@@ -55,7 +56,7 @@ func (s *PreprocessSketch) Run(ctx *types.Context) error {
 	if ctx.CodeCompleteAt != "" {
 		commands = append(commands, &OutputCodeCompletions{})
 	} else {
-		commands = append(commands, &SketchSaver{})
+		commands = append(commands, &FilterSketchSource{Source: &ctx.Source, RemoveLineMarkers: false, RemoveEndLineMarkers: true}, &AddArduinoAndRestoreIncludes{}, &SketchSaver{})
 	}
 
 	for _, command := range commands {

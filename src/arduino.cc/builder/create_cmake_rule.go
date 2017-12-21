@@ -107,10 +107,9 @@ func (s *ExportProjectCMake) Run(ctx *types.Context) error {
 		fmt.Println(err)
 	}
 
-	// Use old ctags method to generate export file
 	commands := []types.Command{
-		&ContainerMergeCopySketchFiles{},
-		&ContainerAddPrototypes{},
+		//&ContainerMergeCopySketchFiles{},
+		//&ContainerAddPrototypes{},
 		&FilterSketchSource{Source: &ctx.Source, RemoveLineMarkers: true},
 		&SketchSaver{},
 	}

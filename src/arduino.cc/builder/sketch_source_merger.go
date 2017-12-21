@@ -32,10 +32,59 @@ package builder
 
 import (
 	"regexp"
+	"strconv"
+	"strings"
 
 	"arduino.cc/builder/types"
 	"arduino.cc/builder/utils"
 )
+
+type AddArduinoAndRestoreIncludes struct{}
+
+func (s *AddArduinoAndRestoreIncludes) Run(ctx *types.Context) error {
+	includeSection := ""
+	if !sketchIncludesArduinoH(&ctx.Sketch.MainFile) {
+		includeSection += "#line 1 " + utils.QuoteCppString(ctx.Sketch.MainFile.Name) + "\n"
+		includeSection += "#include <Arduino.h>\n"
+	}
+	for _, include := range ctx.Includes {
+		includeSection += include.LineMarker + "\n"
+		includeSection += include.Content + "\n"
+	}
+	ctx.Source = includeSection + ctx.Source
+	return nil
+}
+
+type SaveIncludes struct{}
+
+func (s *SaveIncludes) Run(ctx *types.Context) error {
+	// grab includes from all source files
+	// save them in a struct
+	sketch := ctx.Sketch
+	var includes []types.Include
+	includes = append(includes, parseSketchForIncludes(&sketch.MainFile)...)
+	for _, file := range sketch.OtherSketchFiles {
+		includes = append(includes, parseSketchForIncludes(&file)...)
+	}
+	ctx.Includes = includes
+	return nil
+}
+
+func parseSketchForIncludes(sketch *types.SketchFile) []types.Include {
+	var includes []types.Include
+	re := regexp.MustCompile("(?m)^\\s*#\\s*include\\s*[<\"](.*?)[>\"]")
+	matches := re.FindAllString(sketch.Source, -1)
+	splittedByLines := strings.Split(sketch.Source, "\n")
+	for _, match := range matches {
+		for i, line := range splittedByLines {
+			if strings.Contains(line, strings.TrimSpace(match)) {
+				includes = append(includes, types.Include{Content: line, LineMarker: "# " + strconv.Itoa(i+1) + " " + utils.QuoteCppString(sketch.Name)})
+				break
+			}
+		}
+	}
+	return includes
+}
 
 type SketchSourceMerger struct{}
 
