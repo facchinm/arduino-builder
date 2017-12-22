@@ -31,6 +31,10 @@
 package builder
 
 import (
+	"bufio"
+	"bytes"
+	"io"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -39,35 +43,53 @@ import (
 	"arduino.cc/builder/utils"
 )
 
-type AddArduinoAndRestoreIncludes struct{}
+type UncommentIncludes struct{}
 
-func (s *AddArduinoAndRestoreIncludes) Run(ctx *types.Context) error {
-	includeSection := ""
-	if !sketchIncludesArduinoH(&ctx.Sketch.MainFile) {
-		includeSection += "#line 1 " + utils.QuoteCppString(ctx.Sketch.MainFile.Name) + "\n"
-		includeSection += "#include <Arduino.h>\n"
-	}
-	for _, include := range ctx.Includes {
-		includeSection += include.LineMarker + "\n"
-		includeSection += include.Content + "\n"
-	}
-	ctx.Source = includeSection + ctx.Source
+func (s *UncommentIncludes) Run(ctx *types.Context) error {
+
+	b := bytes.NewBufferString(ctx.Source)
+
+	ctx.Source, _ = replaceAllOccurrencesInReader(b, "//#include", "#include")
 	return nil
 }
 
-type SaveIncludes struct{}
+type CommentAllIncludes struct {
+	FilePath string
+}
 
-func (s *SaveIncludes) Run(ctx *types.Context) error {
-	// grab includes from all source files
-	// save them in a struct
-	sketch := ctx.Sketch
-	var includes []types.Include
-	includes = append(includes, parseSketchForIncludes(&sketch.MainFile)...)
-	for _, file := range sketch.OtherSketchFiles {
-		includes = append(includes, parseSketchForIncludes(&file)...)
+func (s *CommentAllIncludes) Run(ctx *types.Context) error {
+	fh, err := os.Open(s.FilePath)
+
+	if err != nil {
+		return err // there was a problem opening the file.
 	}
-	ctx.Includes = includes
+
+	defer fh.Close()
+	out, _ := replaceAllOccurrencesInReader(fh, "#include", "//#include")
+
+	utils.WriteFile(s.FilePath, out)
 	return nil
+}
+
+func replaceAllOccurrencesInReader(fh io.Reader, from, to string) (out string, err error) {
+	f := bufio.NewReader(fh)
+	buf := make([]byte, 1024)
+	for {
+		buf, _, err = f.ReadLine()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return
+		}
+
+		s := string(buf)
+		if strings.Contains(s, from) {
+			s = strings.Replace(s, from, to, 1)
+		}
+		out += s + "\n"
+	}
+	return
 }
 
 func parseSketchForIncludes(sketch *types.SketchFile) []types.Include {

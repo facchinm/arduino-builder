@@ -69,7 +69,7 @@ func (s *FilterSketchSource) Run(ctx *types.Context) error {
 			// quote filename before adding the line
 			split := strings.SplitN(line, " ", 3)
 			split[2] = utils.QuoteCppString(filename)
-			line = strings.Join(split[:2], " ")
+			line = strings.Join(split[:3], " ")
 		}
 
 		if inSketch {

@@ -48,15 +48,15 @@ type PreprocessSketch struct{}
 func (s *PreprocessSketch) Run(ctx *types.Context) error {
 	sourceFile := filepath.Join(ctx.SketchBuildPath, filepath.Base(ctx.Sketch.MainFile.Name)+".cpp")
 	commands := []types.Command{
-		&SaveIncludes{},
 		&GCCPreprocRunner{SourceFilePath: sourceFile, TargetFileName: constants.FILE_CTAGS_TARGET_FOR_GCC_MINUS_E, Includes: ctx.IncludeFolders},
+		&CommentAllIncludes{FilePath: filepath.Join(ctx.PreprocPath, constants.FILE_CTAGS_TARGET_FOR_GCC_MINUS_E)},
 		&ArduinoPreprocessorRunner{},
 	}
 
 	if ctx.CodeCompleteAt != "" {
 		commands = append(commands, &OutputCodeCompletions{})
 	} else {
-		commands = append(commands, &FilterSketchSource{Source: &ctx.Source, RemoveLineMarkers: false, RemoveEndLineMarkers: true}, &AddArduinoAndRestoreIncludes{}, &SketchSaver{})
+		commands = append(commands, &FilterSketchSource{Source: &ctx.Source, RemoveLineMarkers: false, RemoveEndLineMarkers: true}, &UncommentIncludes{}, &SketchSaver{})
 	}
 
 	for _, command := range commands {

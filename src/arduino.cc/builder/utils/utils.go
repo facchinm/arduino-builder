@@ -488,6 +488,9 @@ func LogThis(level string, format string, args ...interface{}) types.Command {
 // preprocessor. This adds double quotes around it and escapes any
 // double quotes and backslashes in the string.
 func QuoteCppString(str string) string {
+	if str[0] == '"' && str[len(str)-1] == '"' {
+		return str
+	}
 	str = strings.Replace(str, "\\", "\\\\", -1)
 	str = strings.Replace(str, "\"", "\\\"", -1)
 	return "\"" + str + "\""
