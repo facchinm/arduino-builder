@@ -30,8 +30,8 @@
 package builder
 
 import (
-	"strings"
 	"os/exec"
+	"strings"
 
 	"arduino.cc/builder/builder_utils"
 	"arduino.cc/builder/constants"
@@ -46,7 +46,7 @@ func GCCPreprocRunner(ctx *types.Context, sourceFilePath string, targetFilePath 
 		return i18n.WrapError(err)
 	}
 
-	_, _, err = utils.ExecCommand(ctx, cmd, /* stdout */ utils.ShowIfVerbose, /* stderr */ utils.Show)
+	_, _, err = utils.ExecCommand(ctx, cmd /* stdout */, utils.ShowIfVerbose /* stderr */, utils.Show)
 	if err != nil {
 		return i18n.WrapError(err)
 	}
@@ -60,7 +60,7 @@ func GCCPreprocRunnerForDiscoveringIncludes(ctx *types.Context, sourceFilePath s
 		return nil, i18n.WrapError(err)
 	}
 
-	_, stderr, err := utils.ExecCommand(ctx, cmd, /* stdout */ utils.ShowIfVerbose, /* stderr */ utils.Capture)
+	_, stderr, err := utils.ExecCommand(ctx, cmd /* stdout */, utils.ShowIfVerbose /* stderr */, utils.Capture)
 	if err != nil {
 		return stderr, i18n.WrapError(err)
 	}
