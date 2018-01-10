@@ -35,11 +35,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"arduino.cc/builder/builder_utils"
-	"arduino.cc/builder/constants"
-	"arduino.cc/builder/i18n"
-	"arduino.cc/builder/types"
-	"arduino.cc/builder/utils"
+	"github.com/arduino/arduino-builder/builder_utils"
+	"github.com/arduino/arduino-builder/constants"
+	"github.com/arduino/arduino-builder/i18n"
+	"github.com/arduino/arduino-builder/types"
+	"github.com/arduino/arduino-builder/utils"
 )
 
 var VALID_EXPORT_EXTENSIONS = map[string]bool{".h": true, ".c": true, ".hpp": true, ".hh": true, ".cpp": true, ".s": true, ".a": true}

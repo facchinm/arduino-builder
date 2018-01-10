@@ -34,10 +34,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"arduino.cc/builder"
-	"arduino.cc/builder/gohasissues"
-	"arduino.cc/builder/types"
-	"arduino.cc/builder/utils"
+	"github.com/arduino/arduino-builder"
+	"github.com/arduino/arduino-builder/gohasissues"
+	"github.com/arduino/arduino-builder/types"
+	"github.com/arduino/arduino-builder/utils"
 	"github.com/stretchr/testify/require"
 )
 

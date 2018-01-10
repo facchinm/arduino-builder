@@ -30,8 +30,8 @@
 package builder
 
 import (
-	"arduino.cc/builder/i18n"
-	"arduino.cc/builder/types"
+	"github.com/arduino/arduino-builder/i18n"
+	"github.com/arduino/arduino-builder/types"
 )
 
 type ContainerMergeCopySketchFiles struct{}

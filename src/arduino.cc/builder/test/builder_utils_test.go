@@ -30,9 +30,9 @@
 package test
 
 import (
-	"arduino.cc/builder/builder_utils"
-	"arduino.cc/builder/utils"
-	"arduino.cc/builder/types"
+	"github.com/arduino/arduino-builder/builder_utils"
+	"github.com/arduino/arduino-builder/utils"
+	"github.com/arduino/arduino-builder/types"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"

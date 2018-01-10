@@ -33,8 +33,8 @@ package builder
 import (
 	"regexp"
 
-	"arduino.cc/builder/types"
-	"arduino.cc/builder/utils"
+	"github.com/arduino/arduino-builder/types"
+	"github.com/arduino/arduino-builder/utils"
 )
 
 type SketchSourceMerger struct{}

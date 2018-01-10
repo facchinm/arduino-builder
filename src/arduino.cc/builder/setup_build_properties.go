@@ -35,11 +35,11 @@ import (
 	"strings"
 	"time"
 
-	"arduino.cc/builder/constants"
-	"arduino.cc/builder/types"
-	"arduino.cc/builder/utils"
-	"arduino.cc/properties"
-	"arduino.cc/timeutils"
+	"github.com/arduino/arduino-builder/constants"
+	"github.com/arduino/arduino-builder/types"
+	"github.com/arduino/arduino-builder/utils"
+	properties "github.com/arduino/go-properties-map"
+	"github.com/arduino/go-timeutils"
 )
 
 type SetupBuildProperties struct{}

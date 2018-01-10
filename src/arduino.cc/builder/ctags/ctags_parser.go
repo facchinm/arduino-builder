@@ -33,7 +33,7 @@ import (
 	"strconv"
 	"strings"
 
-	"arduino.cc/builder/types"
+	"github.com/arduino/arduino-builder/types"
 )
 
 const KIND_PROTOTYPE = "prototype"

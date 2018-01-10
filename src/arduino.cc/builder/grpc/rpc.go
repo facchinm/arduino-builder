@@ -8,15 +8,15 @@ import (
 	"os"
 	"strings"
 
-	"arduino.cc/builder"
-	"arduino.cc/builder/i18n"
-	"arduino.cc/builder/types"
-	"arduino.cc/builder/utils"
+	"github.com/arduino/arduino-builder"
+	"github.com/arduino/arduino-builder/i18n"
+	"github.com/arduino/arduino-builder/types"
+	"github.com/arduino/arduino-builder/utils"
 	"github.com/fsnotify/fsnotify"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	pb "arduino.cc/builder/grpc/proto"
+	pb "github.com/arduino/arduino-builder/grpc/proto"
 )
 
 type StreamLogger struct {

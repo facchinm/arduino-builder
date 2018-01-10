@@ -36,11 +36,11 @@ import (
 	"strconv"
 	"strings"
 
-	"arduino.cc/builder/constants"
-	"arduino.cc/builder/i18n"
-	"arduino.cc/builder/types"
-	"arduino.cc/builder/utils"
-	"arduino.cc/properties"
+	"github.com/arduino/arduino-builder/constants"
+	"github.com/arduino/arduino-builder/i18n"
+	"github.com/arduino/arduino-builder/types"
+	"github.com/arduino/arduino-builder/utils"
+	properties "github.com/arduino/go-properties-map"
 )
 
 type PlatformKeysRewriteLoader struct{}

@@ -30,7 +30,7 @@
 package test
 
 import (
-	"arduino.cc/builder/types"
+	"github.com/arduino/arduino-builder/types"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

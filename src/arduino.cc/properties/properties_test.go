@@ -34,7 +34,7 @@ import (
 	"runtime"
 	"testing"
 
-	"arduino.cc/builder/i18n"
+	"github.com/arduino/arduino-builder/i18n"
 	"github.com/stretchr/testify/require"
 )
 

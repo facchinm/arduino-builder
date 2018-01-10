@@ -30,7 +30,7 @@
 package test
 
 import (
-	"arduino.cc/builder/gohasissues"
+	"github.com/arduino/arduino-builder/gohasissues"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

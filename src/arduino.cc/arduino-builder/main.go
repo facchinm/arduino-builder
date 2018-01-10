@@ -44,13 +44,13 @@ import (
 	"runtime/pprof"
 	"runtime/trace"
 
-	"arduino.cc/builder"
-	"arduino.cc/builder/gohasissues"
-	"arduino.cc/builder/grpc"
-	"arduino.cc/builder/i18n"
-	"arduino.cc/builder/types"
-	"arduino.cc/builder/utils"
-	"arduino.cc/properties"
+	"github.com/arduino/arduino-builder"
+	"github.com/arduino/arduino-builder/gohasissues"
+	"github.com/arduino/arduino-builder/grpc"
+	"github.com/arduino/arduino-builder/i18n"
+	"github.com/arduino/arduino-builder/types"
+	"github.com/arduino/arduino-builder/utils"
+	properties "github.com/arduino/go-properties-map"
 	"github.com/go-errors/errors"
 )
 

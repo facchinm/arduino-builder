@@ -34,7 +34,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"arduino.cc/builder/types"
+	"github.com/arduino/arduino-builder/types"
 	"github.com/stretchr/testify/require"
 )
 

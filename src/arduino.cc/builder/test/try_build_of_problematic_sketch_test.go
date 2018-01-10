@@ -31,8 +31,8 @@
 package test
 
 import (
-	"arduino.cc/builder"
-	"arduino.cc/builder/types"
+	"github.com/arduino/arduino-builder"
+	"github.com/arduino/arduino-builder/types"
 	"os"
 	"path/filepath"
 	"testing"

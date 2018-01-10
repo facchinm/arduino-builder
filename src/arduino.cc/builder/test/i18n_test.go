@@ -30,8 +30,8 @@
 package test
 
 import (
-	"arduino.cc/builder/constants"
-	"arduino.cc/builder/i18n"
+	"github.com/arduino/arduino-builder/constants"
+	"github.com/arduino/arduino-builder/i18n"
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"testing"

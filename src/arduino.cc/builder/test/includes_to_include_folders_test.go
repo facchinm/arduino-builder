@@ -30,8 +30,8 @@
 package test
 
 import (
-	"arduino.cc/builder"
-	"arduino.cc/builder/types"
+	"github.com/arduino/arduino-builder"
+	"github.com/arduino/arduino-builder/types"
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"os"

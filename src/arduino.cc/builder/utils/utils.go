@@ -47,10 +47,10 @@ import (
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 
-	"arduino.cc/builder/constants"
-	"arduino.cc/builder/gohasissues"
-	"arduino.cc/builder/i18n"
-	"arduino.cc/builder/types"
+	"github.com/arduino/arduino-builder/constants"
+	"github.com/arduino/arduino-builder/gohasissues"
+	"github.com/arduino/arduino-builder/i18n"
+	"github.com/arduino/arduino-builder/types"
 )
 
 func KeysOfMapOfStringInterface(input map[string]interface{}) []string {

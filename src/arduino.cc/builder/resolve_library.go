@@ -33,9 +33,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"arduino.cc/builder/constants"
-	"arduino.cc/builder/types"
-	"arduino.cc/builder/utils"
+	"github.com/arduino/arduino-builder/constants"
+	"github.com/arduino/arduino-builder/types"
+	"github.com/arduino/arduino-builder/utils"
 )
 
 func ResolveLibrary(ctx *types.Context, header string) *types.Library {

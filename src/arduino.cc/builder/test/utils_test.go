@@ -30,8 +30,8 @@
 package test
 
 import (
-	"arduino.cc/builder/i18n"
-	"arduino.cc/builder/utils"
+	"github.com/arduino/arduino-builder/i18n"
+	"github.com/arduino/arduino-builder/utils"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"

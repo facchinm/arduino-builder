@@ -34,7 +34,7 @@ import (
 	"os"
 	"strings"
 
-	"arduino.cc/builder/types"
+	"github.com/arduino/arduino-builder/types"
 )
 
 func (p *CTagsParser) FixCLinkageTagsDeclarations(tags []*types.CTag) {

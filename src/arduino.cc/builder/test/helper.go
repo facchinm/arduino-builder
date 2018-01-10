@@ -38,9 +38,9 @@ import (
 	"testing"
 	"text/template"
 
-	"arduino.cc/builder/constants"
-	"arduino.cc/builder/types"
-	"arduino.cc/builder/utils"
+	"github.com/arduino/arduino-builder/constants"
+	"github.com/arduino/arduino-builder/types"
+	"github.com/arduino/arduino-builder/utils"
 	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/assert"
 )

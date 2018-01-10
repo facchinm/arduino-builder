@@ -3,8 +3,8 @@ package types
 import (
 	"strings"
 
-	"arduino.cc/builder/i18n"
-	"arduino.cc/properties"
+	"github.com/arduino/arduino-builder/i18n"
+	properties "github.com/arduino/go-properties-map"
 )
 
 // Context structure

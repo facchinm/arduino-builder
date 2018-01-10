@@ -32,10 +32,10 @@ package test
 import (
 	"testing"
 
-	"arduino.cc/builder"
-	"arduino.cc/builder/constants"
-	"arduino.cc/builder/types"
-	"arduino.cc/properties"
+	"github.com/arduino/arduino-builder"
+	"github.com/arduino/arduino-builder/constants"
+	"github.com/arduino/arduino-builder/types"
+	properties "github.com/arduino/go-properties-map"
 	"github.com/stretchr/testify/require"
 )
 

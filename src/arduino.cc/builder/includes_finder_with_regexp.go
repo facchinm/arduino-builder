@@ -30,7 +30,7 @@
 package builder
 
 import (
-	"arduino.cc/builder/types"
+	"github.com/arduino/arduino-builder/types"
 	"regexp"
 	"strings"
 )

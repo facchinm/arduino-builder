@@ -30,10 +30,10 @@
 package test
 
 import (
-	"arduino.cc/builder"
-	"arduino.cc/builder/constants"
-	"arduino.cc/builder/gohasissues"
-	"arduino.cc/builder/types"
+	"github.com/arduino/arduino-builder"
+	"github.com/arduino/arduino-builder/constants"
+	"github.com/arduino/arduino-builder/gohasissues"
+	"github.com/arduino/arduino-builder/types"
 	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
