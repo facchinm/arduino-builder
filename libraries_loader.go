@@ -70,6 +70,8 @@ func (s *LibrariesLoader) Run(ctx *types.Context) error {
 	}
 	sortedLibrariesFolders = utils.AppendIfNotPresent(sortedLibrariesFolders, librariesFolders...)
 
+	sortedLibrariesFolders = appendPathToLibrariesFolders(sortedLibrariesFolders, filepath.Join(filepath.Dir(ctx.SketchLocation), constants.FOLDER_LIBRARIES))
+
 	ctx.LibrariesFolders = sortedLibrariesFolders
 
 	var libraries []*types.Library
