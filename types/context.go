@@ -70,6 +70,7 @@ type Context struct {
 	Libraries                  []*Library
 	HeaderToLibraries          map[string][]*Library
 	ImportedLibraries          []*Library
+	RequiredLibraries          []*Library
 	LibrariesResolutionResults map[string]LibraryResolutionResult
 	IncludeFolders             []string
 	OutputGccMinusM            string

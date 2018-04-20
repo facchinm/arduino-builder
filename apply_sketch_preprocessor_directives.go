@@ -43,12 +43,28 @@ func (s *FindAndApplySketchPreprocessorDirectives) Run(ctx *types.Context) error
 	sketch := ctx.Sketch.MainFile.Source
 	rewritesProperties := extractPreprocessorDirectives(sketch)
 
-	ctx.CustomBuildProperties = append(ctx.CustomBuildProperties, rewritesProperties...)
+	if len(rewritesProperties["BOARD"]) == 1 {
+		ctx.FQBN = rewritesProperties["BOARD"][0]
+	}
+
+	for _, element := range rewritesProperties["LIBRARY"] {
+		var lib types.Library
+		fields := strings.Split(element, " ")
+		lib.URL = fields[len(fields)-1]
+		lib.Version = fields[len(fields)-2]
+		lib.Name = strings.Join(fields[0:len(fields)-2], " ")
+		ctx.RequiredLibraries = append(ctx.RequiredLibraries, &lib)
+	}
+
+	for _, element := range rewritesProperties["FLAGS"] {
+		fields := strings.Split(element, " ")
+		ctx.CustomBuildProperties = append(ctx.CustomBuildProperties, fields...)
+	}
 
 	return nil
 }
 
-func extractPreprocessorDirectives(sketch string) []string {
+func extractPreprocessorDirectives(sketch string) map[string][]string {
 	/*
 		In a very CGO-like fashion, search for strings matching
 		// #arduino {directive}
@@ -56,11 +72,12 @@ func extractPreprocessorDirectives(sketch string) []string {
 		use the directive to populate an extra preference map
 	*/
 
-	var properties []string
+	var properties map[string][]string
+	properties = make(map[string][]string)
 
 	firstCodeChar := getFirstNonCommentNonBlankCharacter(sketch)
 
-	r, _ := regexp.Compile("(?m)^//\\s*#arduino\\s*.*=.*$")
+	r, _ := regexp.Compile("(?m)^//\\s*#arduino\\s*.*:(.*?)$")
 	results := r.FindAllString(sketch, -1)
 	resIdx := r.FindAllStringIndex(sketch, -1)
 
@@ -69,7 +86,10 @@ func extractPreprocessorDirectives(sketch string) []string {
 		result = strings.Replace(result, "#arduino", "", 1)
 		result = strings.TrimSpace(result)
 		if resIdx[i][0] < firstCodeChar {
-			properties = append(properties, result)
+			split := strings.SplitN(result, ":", 2)
+			if len(split) > 1 {
+				properties[split[0]] = append(properties[split[0]], strings.TrimSpace(split[1]))
+			}
 		}
 	}
 	return properties
