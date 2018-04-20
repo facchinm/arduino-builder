@@ -294,7 +294,8 @@ func main() {
 		ctx.FQBN = fqbn
 	}
 	if ctx.FQBN == "" {
-		printErrorMessageAndFlagUsage(errors.New("Parameter '" + FLAG_FQBN + "' is mandatory"))
+		// wait a bit befor printing it (the board name could be contained in the sketch)
+		// printErrorMessageAndFlagUsage(errors.New("Parameter '" + FLAG_FQBN + "' is mandatory"))
 	}
 
 	// FLAG_BUILD_PATH
