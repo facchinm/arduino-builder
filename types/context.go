@@ -91,6 +91,9 @@ type Context struct {
 	// Dry run, only create progress map
 	Progress ProgressStruct
 
+	// inz handling
+	SketchZipped bool
+
 	// Contents of a custom build properties file (line by line)
 	CustomBuildProperties []string
 
