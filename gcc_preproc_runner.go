@@ -88,7 +88,7 @@ func prepareGCCPreprocRecipeProperties(ctx *types.Context, sourceFilePath string
 
 	// Remove -MMD argument if present. Leaving it will make gcc try
 	// to create a /dev/null.d dependency file, which won't work.
-	cmd.Args = utils.Filter(cmd.Args, func(a string) bool { return a != "-MMD" })
+	cmd.Args = utils.Filter(cmd.Args, func(a string) bool { return a != "-MMD" && a != "-CC" && a != "-C" })
 
 	return cmd, nil
 }
